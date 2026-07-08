@@ -2,6 +2,8 @@ name: archetype
 services:
   meilisearch:
     image: getmeili/meilisearch:v1.45.2
+    ports:
+      - "7700:7700"
     environment:
       - MEILI_ENV=${MEILI_ENV}
       # Migrate the on-disk index format in place when the image is bumped to a
@@ -19,6 +21,8 @@ services:
     # version mismatch that would force a REINDEX. The postgres image isn't
     # CVE-scanned by CD, so a newer base buys nothing here.
     image: ${POSTGRES_IMAGE:-postgres:18.4-bookworm}
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT}
@@ -40,6 +44,8 @@ services:
 
   pg-admin:
     image: dpage/pgadmin4:9.15
+    ports:
+      - "5050:80"
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
@@ -64,6 +70,8 @@ services:
   api:
     image: ghcr.io/archetype-pal/backend:latest
     build: .
+    ports:
+      - "8000:80"
     environment:
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
@@ -99,10 +107,14 @@ services:
         condition: service_healthy
   image_server:
     image: daschswiss/sipi:v5.0.1
+    ports:
+      - "1024:1024"
     volumes:
       - ./storage/media:/sipi/images
   redis:
     image: redis:8-alpine
+    ports:
+      - "6379:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
